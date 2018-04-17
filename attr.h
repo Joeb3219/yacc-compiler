@@ -25,6 +25,7 @@ typedef struct {
 	int headLabel;
 	int failLabel;
 	int successLabel;
+	int targetRegister;
 } labelInfo;
 
 #endif

@@ -36,7 +36,7 @@ char *CommentBuffer;
 
 %type <targetReg> condexp
 
-%type <labelinf> WHILE
+%type <labelinf> WHILE ifhead
 
 %start program
 
@@ -116,13 +116,52 @@ stmt    : ifstmt { }
 cmpdstmt: BEG stmtlist END { }
 	;
 
-ifstmt :  ifhead 
-		  THEN stmt 
+ifstmt :  ifhead	{
+						
+						emit(NOLABEL, CBR, $1.targetRegister, $1.successLabel, $1.failLabel);
+
+					}
+
+					{
+
+		  				emitComment("This is the true branch.");
+	  					emit($1.successLabel, NOP, 0, 0, 0);
+		  			}
+
+		  THEN 
+		  stmt
+
+		  			{
+
+		  				emitComment("Jumping to outside of IF statement.");
+		  				emit(NOLABEL, BR, $1.headLabel, 0, 0);
+
+	  					emitComment("This is the false branch.");
+	  					emit($1.failLabel, NOP, 0, 0, 0);
+
+	  				} 
 	  ELSE 
+
 		  stmt 
+
+		  			{
+
+		  				emitComment("END IF");
+		  				emit($1.headLabel, NOP, 0, 0, 0);
+
+		  			}
 	;
 
-ifhead : IF condexp {  }
+ifhead : IF condexp 	{ 
+
+							$$.successLabel = NextLabel();
+							$$.failLabel = NextLabel();
+							$$.targetRegister = $2.targetRegister;
+							$$.headLabel = NextLabel();
+
+							emitComment("BEGIN IF");
+
+						}
 		;
 
 writestmt: PRINT '(' exp ')' { int printOffset = -4; /* default location for printing */
@@ -320,20 +359,26 @@ exp	: exp '+' exp		{
  
 
 
-	| ICONST                 { int newReg = NextRegister();
-							   $$.targetRegister = newReg;
-				   $$.type = TYPE_INT;
-				   emit(NOLABEL, LOADI, $1.num, newReg, EMPTY); }
+		| ICONST	{
+						int newReg = NextRegister();
+						$$.targetRegister = newReg;
+				   		$$.type = TYPE_INT;
+				   		emit(NOLABEL, LOADI, $1.num, newReg, EMPTY); 
+				   	}
 
-		| TRUE                   { int newReg = NextRegister(); /* TRUE is encoded as value '1' */
-							   $$.targetRegister = newReg;
-				   $$.type = TYPE_BOOL;
-				   emit(NOLABEL, LOADI, 1, newReg, EMPTY); }
+		| TRUE 		{ 
+						int newReg = NextRegister(); /* TRUE is encoded as value '1' */
+						$$.targetRegister = newReg;
+						$$.type = TYPE_BOOL;
+						emit(NOLABEL, LOADI, 1, newReg, EMPTY); 
+					}
 
-		| FALSE                   { int newReg = NextRegister(); /* TRUE is encoded as value '0' */
-							   $$.targetRegister = newReg;
-				   $$.type = TYPE_BOOL;
-				   emit(NOLABEL, LOADI, 0, newReg, EMPTY); }
+		| FALSE 	{ 
+						int newReg = NextRegister(); /* TRUE is encoded as value '0' */
+						$$.targetRegister = newReg;
+				   		$$.type = TYPE_BOOL;
+				   		emit(NOLABEL, LOADI, 0, newReg, EMPTY); 
+				   	}
 
 	| error { yyerror("***Error: illegal expression\n");}  
 	;
@@ -354,16 +399,85 @@ condexp	: exp NEQ exp		{
 
 							} 
 
-		| exp EQ exp		{  } 
+		| exp EQ exp		{
 
-		| exp LT exp		{  }
+	
+								$$.targetRegister = NextRegister();
+								$$.type = TYPE_BOOL;
 
-		| exp LEQ exp		{  }
+								if($1.type != $3.type){
+									printf("*** ERROR ***: Incompatible type comparison\n");
+								}
 
-	| exp GT exp		{  }
+								sprintf(CommentBuffer, "Asserting \"r%d\" == \"r%d\"", $1.targetRegister, $3.targetRegister);
+								emitComment(CommentBuffer);
+								emit(NOLABEL, CMPEQ, $1.targetRegister, $3.targetRegister, $$.targetRegister);
 
-	| exp GEQ exp		{  }
+							} 
 
+		| exp LT exp		{
+
+	
+								$$.targetRegister = NextRegister();
+								$$.type = TYPE_BOOL;
+
+								if($1.type != $3.type){
+									printf("*** ERROR ***: Incompatible type comparison\n");
+								}
+
+								sprintf(CommentBuffer, "Asserting \"r%d\" < \"r%d\"", $1.targetRegister, $3.targetRegister);
+								emitComment(CommentBuffer);
+								emit(NOLABEL, CMPLT, $1.targetRegister, $3.targetRegister, $$.targetRegister);
+
+							} 
+
+		| exp LEQ exp		{
+
+	
+								$$.targetRegister = NextRegister();
+								$$.type = TYPE_BOOL;
+
+								if($1.type != $3.type){
+									printf("*** ERROR ***: Incompatible type comparison\n");
+								}
+
+								sprintf(CommentBuffer, "Asserting \"r%d\" <= \"r%d\"", $1.targetRegister, $3.targetRegister);
+								emitComment(CommentBuffer);
+								emit(NOLABEL, CMPLE, $1.targetRegister, $3.targetRegister, $$.targetRegister);
+
+							} 
+
+	| exp GT exp			{
+
+	
+								$$.targetRegister = NextRegister();
+								$$.type = TYPE_BOOL;
+
+								if($1.type != $3.type){
+									printf("*** ERROR ***: Incompatible type comparison\n");
+								}
+
+								sprintf(CommentBuffer, "Asserting \"r%d\" > \"r%d\"", $1.targetRegister, $3.targetRegister);
+								emitComment(CommentBuffer);
+								emit(NOLABEL, CMPGT, $1.targetRegister, $3.targetRegister, $$.targetRegister);
+
+							} 
+
+	| exp GEQ exp			{
+
+	
+								$$.targetRegister = NextRegister();
+								$$.type = TYPE_BOOL;
+
+								if($1.type != $3.type){
+									printf("*** ERROR ***: Incompatible type comparison\n");
+								}
+
+								sprintf(CommentBuffer, "Asserting \"r%d\" >= \"r%d\"", $1.targetRegister, $3.targetRegister);
+								emitComment(CommentBuffer);
+								emit(NOLABEL, CMPGE, $1.targetRegister, $3.targetRegister, $$.targetRegister);
+
+							} 
 	| error { yyerror("***Error: illegal conditional expression\n");}  
 		;
 
