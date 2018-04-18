@@ -69,8 +69,8 @@ vardcl	: idlist ':' type 	{
 								
 								int i;
 								for(i = 0; i < $1.numIds; i ++){
-									int offset = NextOffset(1);
-									insert($1.ids[i], $3.type, offset);
+									int offset = NextOffset($3.blocksNeeded);
+									insert($1.ids[i], $3.quantityType, $3.type, offset);
 								}
 
 								free($1.ids);
@@ -92,9 +92,21 @@ idlist	: idlist ',' ID 	{
 	;
 
 
-type	: ARRAY '[' ICONST ']' OF stype {  }
+type	: ARRAY '[' ICONST ']' OF stype {
+	
+											$$.type = $6.type;
+											$$.quantityType = QUANTITY_ARRAY;
+											$$.blocksNeeded = $3.num;
 
-		| stype { $$.type = $1.type; }
+										}
+
+		| stype 						{ 
+										
+											$$.type = $1.type; 
+											$$.quantityType = QUANTITY_SCALAR;
+											$$.blocksNeeded = 1;
+										
+										}
 	;
 
 stype	: INT { $$.type = TYPE_INT; }
@@ -214,43 +226,75 @@ wstmt	: WHILE  	{
 
 
 astmt : lhs ASG exp             { 
-				  if (! ((($1.type == TYPE_INT) && ($3.type == TYPE_INT)) || 
-						 (($1.type == TYPE_BOOL) && ($3.type == TYPE_BOOL)))) {
-					printf("*** ERROR ***: Assignment types do not match.\n");
-				  }
+									if (! ((($1.type == TYPE_INT) && ($3.type == TYPE_INT)) || 
+										(($1.type == TYPE_BOOL) && ($3.type == TYPE_BOOL)))) {
+											printf("*** ERROR ***: Assignment types do not match.\n");
+									}
 
-				  emit(NOLABEL,
-									   STORE, 
-									   $3.targetRegister,
-									   $1.targetRegister,
-									   EMPTY);
+									emit(NOLABEL, STORE, $3.targetRegister, $1.targetRegister, EMPTY);
 								}
 	;
 
-lhs	: ID			{ 
-						int newReg1 = NextRegister();
-						int newReg2 = NextRegister();
+	lhs	: ID			{ 
+							int newReg1 = NextRegister();
+							int newReg2 = NextRegister();
 
-						SymTabEntry *entry = lookup($1.str);
+							SymTabEntry *entry = lookup($1.str);
 
-						if(entry == NULL){
-							printf("*** ERROR ***: Variable undeclared.\n");
+							if(entry == NULL){
+								printf("*** ERROR ***: Variable undeclared.\n");
+							}
+
+							int offset = entry->offset;				
+							
+							$$.targetRegister = newReg2;
+							$$.quantityType = entry->quantityType;
+							$$.type = entry->type;
+
+							sprintf(CommentBuffer, "Computing address for variable %s into register \"r%d\"", $1.str, newReg2);
+							emitComment(CommentBuffer);
+							emit(NOLABEL, LOADI, offset, newReg1, EMPTY);
+							emit(NOLABEL, ADD, 0, newReg1, newReg2);
 						}
 
-						int offset = entry->offset;				
-						
-						$$.targetRegister = newReg2;
-						$$.type = entry->type;
 
-						sprintf(CommentBuffer, "Computing address for variable %s into register \"r%d\"", $1.str, newReg2);
-						emitComment(CommentBuffer);
-						emit(NOLABEL, LOADI, offset, newReg1, EMPTY);
-						emit(NOLABEL, ADD, 0, newReg1, newReg2);
-					}
+	|  ID '[' exp ']' 	{
 
+							int resultRegister = NextRegister();
+							int fourRegister = NextRegister();
+							int multipleOffsetComputationRegister = NextRegister();
+							int offsetRegister = NextRegister();
 
-								|  ID '[' exp ']' {   }
-								;
+							SymTabEntry *entry = lookup($1.str);
+
+							if(entry == NULL){
+								printf("*** ERROR ***: Variable undeclared.\n");
+							}
+
+							if($3.type == TYPE_BOOL){
+								printf("*** ERROR ***: Attempts to use boolean as key.\n");
+							}
+
+							if($3.quantityType == QUANTITY_ARRAY){
+								printf("*** ERROR ***: Attempts to use array as key.\n");
+							}
+
+							$$.quantityType = QUANTITY_SCALAR;
+							$$.type = entry->type;
+							$$.targetRegister = resultRegister;
+
+							sprintf(CommentBuffer, "Computing address of %s, sub r%d", $1.str, $3.targetRegister);
+							emitComment(CommentBuffer);
+							emit(NOLABEL, LOADI, 4, fourRegister, 0);
+							emit(NOLABEL, MULT, fourRegister, $3.targetRegister, multipleOffsetComputationRegister);
+
+							int baseOffset = NextRegister();
+							emit(NOLABEL, LOADI, entry->offset, baseOffset, 0);
+							emit(NOLABEL, ADD, multipleOffsetComputationRegister, baseOffset, offsetRegister);
+							emit(NOLABEL, ADD, 0, offsetRegister, $$.targetRegister);
+
+						}
+	;
 
 
 exp	: exp '+' exp		{ 
@@ -355,7 +399,42 @@ exp	: exp '+' exp		{
 								emit(NOLABEL, LOADAI, 0, offset, newReg);								  
 							}
 
-		| ID '[' exp ']'	{   }
+		| ID '[' exp ']'	{
+
+								int resultRegister = NextRegister();
+								int fourRegister = NextRegister();
+								int multipleOffsetComputationRegister = NextRegister();
+								int offsetRegister = NextRegister();
+
+								SymTabEntry *entry = lookup($1.str);
+
+								if(entry == NULL){
+									printf("*** ERROR ***: Variable undeclared.\n");
+								}
+
+								if($3.type == TYPE_BOOL){
+									printf("*** ERROR ***: Attempts to use boolean as key.\n");
+								}
+
+								if($3.quantityType == QUANTITY_ARRAY){
+									printf("*** ERROR ***: Attempts to use array as key.\n");
+								}
+
+								$$.quantityType = QUANTITY_SCALAR;
+								$$.type = entry->type;
+								$$.targetRegister = resultRegister;
+
+								sprintf(CommentBuffer, "Computing address of %s, sub r%d", $1.str, $3.targetRegister);
+								emitComment(CommentBuffer);
+								emit(NOLABEL, LOADI, 4, fourRegister, 0);
+								emit(NOLABEL, MULT, fourRegister, $3.targetRegister, multipleOffsetComputationRegister);
+
+								int baseOffset = NextRegister();
+								emit(NOLABEL, LOADI, entry->offset, baseOffset, 0);
+								emit(NOLABEL, ADD, multipleOffsetComputationRegister, baseOffset, offsetRegister);
+								emit(NOLABEL, LOADAO, 0, offsetRegister, $$.targetRegister);
+
+							}
  
 
 

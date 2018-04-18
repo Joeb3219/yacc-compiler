@@ -9,11 +9,15 @@
 
 typedef union {int num; char *str;} tokentype;
 
-typedef enum type_expression {TYPE_INT=0, TYPE_BOOL, TYPE_ERROR} Type_Expression;
+typedef enum quantity_type 		{QUANTITY_SCALAR, QUANTITY_ARRAY} QuantityType;
+
+typedef enum type_expression 	{TYPE_INT=0, TYPE_BOOL, TYPE_ERROR} Type_Expression;
 
 typedef struct {
+	QuantityType quantityType;
 	Type_Expression type;
 	int targetRegister;
+	int blocksNeeded;
 } regInfo;
 
 typedef struct {

@@ -21,6 +21,7 @@ typedef struct { /* need to augment this */
   char *name;
   int offset;
   Type_Expression type;  
+  QuantityType quantityType;
 } SymTabEntry;
 
 extern
@@ -30,7 +31,7 @@ extern
 SymTabEntry * lookup(char *name);
 
 extern
-void insert(char *name, Type_Expression type, int offset);
+void insert(char *name, QuantityType quantityType, Type_Expression type, int offset);
 
 extern
 void PrintSymbolTable();
