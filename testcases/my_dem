@@ -1,0 +1,22 @@
+program main;
+var 
+  i, j: integer;
+  b: array[10] of integer;
+  c: array[10] of integer;
+  d: array[12] of boolean;
+  status: boolean;
+begin
+  d[0] := true;
+  d[2] := false;
+  status := d[0] or d[1];
+  d[1] := status;
+  i := 1;
+  while i <= 11 do
+  begin  
+	j := i - 1;
+	status := d[i] or d[j];
+	d[i] := status;
+	print(status);
+	i := i + 1
+  end
+end.

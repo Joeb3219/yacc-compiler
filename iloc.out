@@ -1,155 +1,118 @@
 	// Assign STATIC_AREA_ADDRESS to register "r0"
  	 loadI 1024 	=> r0 
- 	 loadI 100 	=> r1 
-	// Computing address of b, sub r1
+ 	 loadI 0 	=> r1 
+	// Compute address of array variable "d" with base address 88
  	 loadI 4 	=> r3 
- 	 mult r3, r1 	=> r4 
- 	 loadI 4 	=> r6 
- 	 add r4, r6 	=> r5 
- 	 add r0, r5 	=> r2 
- 	 loadI 2 	=> r7 
+ 	 mult r1, r3 	=> r4 
+ 	 loadI 88 	=> r5 
+ 	 add r5, r4 	=> r6 
+ 	 add r0, r6 	=> r2 
+ 	 loadI 1 	=> r7 
  	 store r7 	=> r2 
- 	 loadI 0 	=> r8 
-	// Computing address of b, sub r8
+ 	 loadI 2 	=> r8 
+	// Compute address of array variable "d" with base address 88
  	 loadI 4 	=> r10 
- 	 mult r10, r8 	=> r11 
- 	 loadI 4 	=> r13 
- 	 add r11, r13 	=> r12 
- 	 add r0, r12 	=> r9 
- 	 loadI 1 	=> r14 
+ 	 mult r8, r10 	=> r11 
+ 	 loadI 88 	=> r12 
+ 	 add r12, r11 	=> r13 
+ 	 add r0, r13 	=> r9 
+ 	 loadI 0 	=> r14 
  	 store r14 	=> r9 
- 	 loadI 0 	=> r15 
-	// Computing address of c, sub r15
- 	 loadI 4 	=> r17 
- 	 mult r17, r15 	=> r18 
- 	 loadI 44 	=> r20 
- 	 add r18, r20 	=> r19 
- 	 add r0, r19 	=> r16 
- 	 loadI 1 	=> r21 
- 	 store r21 	=> r16 
- 	 loadI 0 	=> r22 
-	// Computing address of b, sub r22
- 	 loadI 4 	=> r24 
- 	 mult r24, r22 	=> r25 
- 	 loadI 4 	=> r27 
- 	 add r25, r27 	=> r26 
- 	 loadAO r0, r26 	=> r23 
-	// Code for "PRINT" from offset -4
- 	 storeAI r23 	=> r0, -4 
- 	 outputAI r0, -4
- 	 loadI 0 	=> r28 
-	// Computing address of c, sub r28
- 	 loadI 4 	=> r30 
- 	 mult r30, r28 	=> r31 
- 	 loadI 44 	=> r33 
- 	 add r31, r33 	=> r32 
- 	 loadAO r0, r32 	=> r29 
-	// Code for "PRINT" from offset -4
- 	 storeAI r29 	=> r0, -4 
- 	 outputAI r0, -4
-	// Computing address for variable i into register "r35"
- 	 loadI 0 	=> r34 
- 	 add r0, r34 	=> r35 
- 	 loadI 1 	=> r36 
- 	 store r36 	=> r35 
-	// WHILE STATEMENT #0
+	// Compute address of variable "status" at offset 136 in register 16
+ 	 loadI 136 	=> r15 
+ 	 add r0, r15 	=> r16 
+ 	 loadI 0 	=> r17 
+	// Load RHS value of array variable "d" with based address 88
+ 	 loadI 4 	=> r19 
+ 	 mult r17, r19 	=> r20 
+ 	 loadI 88 	=> r21 
+ 	 add r21, r20 	=> r22 
+ 	 loadAO r0, r22 	=> r18 
+ 	 loadI 1 	=> r23 
+	// Load RHS value of array variable "d" with based address 88
+ 	 loadI 4 	=> r25 
+ 	 mult r23, r25 	=> r26 
+ 	 loadI 88 	=> r27 
+ 	 add r27, r26 	=> r28 
+ 	 loadAO r0, r28 	=> r24 
+ 	 or r18, r24 	=> r29 
+ 	 store r29 	=> r16 
+ 	 loadI 1 	=> r30 
+	// Compute address of array variable "d" with base address 88
+ 	 loadI 4 	=> r32 
+ 	 mult r30, r32 	=> r33 
+ 	 loadI 88 	=> r34 
+ 	 add r34, r33 	=> r35 
+ 	 add r0, r35 	=> r31 
+	// Load RHS value of variable "status" at offset 136
+ 	 loadAI r0, 136 	=> r36 
+ 	 store r36 	=> r31 
+	// Compute address of variable "i" at offset 0 in register 38
+ 	 loadI 0 	=> r37 
+ 	 add r0, r37 	=> r38 
+ 	 loadI 1 	=> r39 
+ 	 store r39 	=> r38 
 L0:	 nop 
-	// Loading variable i from RHS to register "r37"
- 	 loadAI r0, 0 	=> r37 
- 	 loadI 9 	=> r38 
-	// Asserting "r37" <= "r38"
- 	 cmp_LE r37, r38 	=> r39
-	// Testing conditional into register r39
- 	 cbr r39 	=> L1, L2
-L1:	 nop 
-	// Loading variable i from RHS to register "r40"
+	// Control code for "WHILE DO"
+	// Load RHS value of variable "i" at offset 0
  	 loadAI r0, 0 	=> r40 
-	// Computing address of b, sub r40
- 	 loadI 4 	=> r42 
- 	 mult r42, r40 	=> r43 
- 	 loadI 4 	=> r45 
- 	 add r43, r45 	=> r44 
- 	 add r0, r44 	=> r41 
-	// Loading variable i from RHS to register "r46"
- 	 loadAI r0, 0 	=> r46 
- 	 loadI 1 	=> r47 
-	// SUB'ing variables stored in registers 46 and 47
- 	 sub r46, r47 	=> r48 
-	// Computing address of b, sub r48
- 	 loadI 4 	=> r50 
- 	 mult r50, r48 	=> r51 
- 	 loadI 4 	=> r53 
- 	 add r51, r53 	=> r52 
- 	 loadAO r0, r52 	=> r49 
-	// Loading variable i from RHS to register "r54"
- 	 loadAI r0, 0 	=> r54 
- 	 loadI 1 	=> r55 
-	// SUB'ing variables stored in registers 54 and 55
- 	 sub r54, r55 	=> r56 
-	// Computing address of b, sub r56
+ 	 loadI 11 	=> r41 
+ 	 cmp_LE r40, r41 	=> r42
+ 	 cbr r42 	=> L1, L2
+L1:	 nop 
+	// Body of "WHILE" construct starts here
+	// Compute address of variable "j" at offset 4 in register 44
+ 	 loadI 4 	=> r43 
+ 	 add r0, r43 	=> r44 
+	// Load RHS value of variable "i" at offset 0
+ 	 loadAI r0, 0 	=> r45 
+ 	 loadI 1 	=> r46 
+ 	 sub r45, r46 	=> r47 
+ 	 store r47 	=> r44 
+	// Compute address of variable "status" at offset 136 in register 49
+ 	 loadI 136 	=> r48 
+ 	 add r0, r48 	=> r49 
+	// Load RHS value of variable "i" at offset 0
+ 	 loadAI r0, 0 	=> r50 
+	// Load RHS value of array variable "d" with based address 88
+ 	 loadI 4 	=> r52 
+ 	 mult r50, r52 	=> r53 
+ 	 loadI 88 	=> r54 
+ 	 add r54, r53 	=> r55 
+ 	 loadAO r0, r55 	=> r51 
+	// Load RHS value of variable "j" at offset 4
+ 	 loadAI r0, 4 	=> r56 
+	// Load RHS value of array variable "d" with based address 88
  	 loadI 4 	=> r58 
- 	 mult r58, r56 	=> r59 
- 	 loadI 4 	=> r61 
- 	 add r59, r61 	=> r60 
- 	 loadAO r0, r60 	=> r57 
-	// ADD'ing variables stored in registers 49 and 57
- 	 add r49, r57 	=> r62 
- 	 store r62 	=> r41 
-	// Loading variable i from RHS to register "r63"
+ 	 mult r56, r58 	=> r59 
+ 	 loadI 88 	=> r60 
+ 	 add r60, r59 	=> r61 
+ 	 loadAO r0, r61 	=> r57 
+ 	 or r51, r57 	=> r62 
+ 	 store r62 	=> r49 
+	// Load RHS value of variable "i" at offset 0
  	 loadAI r0, 0 	=> r63 
-	// Computing address of c, sub r63
+	// Compute address of array variable "d" with base address 88
  	 loadI 4 	=> r65 
- 	 mult r65, r63 	=> r66 
- 	 loadI 44 	=> r68 
- 	 add r66, r68 	=> r67 
- 	 add r0, r67 	=> r64 
-	// Loading variable i from RHS to register "r69"
- 	 loadAI r0, 0 	=> r69 
- 	 loadI 1 	=> r70 
-	// SUB'ing variables stored in registers 69 and 70
- 	 sub r69, r70 	=> r71 
-	// Computing address of c, sub r71
- 	 loadI 4 	=> r73 
- 	 mult r73, r71 	=> r74 
- 	 loadI 44 	=> r76 
- 	 add r74, r76 	=> r75 
- 	 loadAO r0, r75 	=> r72 
- 	 loadI 1 	=> r77 
-	// ADD'ing variables stored in registers 72 and 77
- 	 add r72, r77 	=> r78 
- 	 store r78 	=> r64 
-	// Loading variable i from RHS to register "r79"
- 	 loadAI r0, 0 	=> r79 
-	// Computing address of b, sub r79
- 	 loadI 4 	=> r81 
- 	 mult r81, r79 	=> r82 
- 	 loadI 4 	=> r84 
- 	 add r82, r84 	=> r83 
- 	 loadAO r0, r83 	=> r80 
+ 	 mult r63, r65 	=> r66 
+ 	 loadI 88 	=> r67 
+ 	 add r67, r66 	=> r68 
+ 	 add r0, r68 	=> r64 
+	// Load RHS value of variable "status" at offset 136
+ 	 loadAI r0, 136 	=> r69 
+ 	 store r69 	=> r64 
+	// Load RHS value of variable "status" at offset 136
+ 	 loadAI r0, 136 	=> r70 
 	// Code for "PRINT" from offset -4
- 	 storeAI r80 	=> r0, -4 
+ 	 storeAI r70 	=> r0, -4 
  	 outputAI r0, -4
-	// Loading variable i from RHS to register "r85"
- 	 loadAI r0, 0 	=> r85 
-	// Computing address of c, sub r85
- 	 loadI 4 	=> r87 
- 	 mult r87, r85 	=> r88 
- 	 loadI 44 	=> r90 
- 	 add r88, r90 	=> r89 
- 	 loadAO r0, r89 	=> r86 
-	// Code for "PRINT" from offset -4
- 	 storeAI r86 	=> r0, -4 
- 	 outputAI r0, -4
-	// Computing address for variable i into register "r92"
- 	 loadI 0 	=> r91 
- 	 add r0, r91 	=> r92 
-	// Loading variable i from RHS to register "r93"
- 	 loadAI r0, 0 	=> r93 
- 	 loadI 1 	=> r94 
-	// ADD'ing variables stored in registers 93 and 94
- 	 add r93, r94 	=> r95 
- 	 store r95 	=> r92 
-	// Jumping back to the beginng of while loop #0
+	// Compute address of variable "i" at offset 0 in register 72
+ 	 loadI 0 	=> r71 
+ 	 add r0, r71 	=> r72 
+	// Load RHS value of variable "i" at offset 0
+ 	 loadAI r0, 0 	=> r73 
+ 	 loadI 1 	=> r74 
+ 	 add r73, r74 	=> r75 
+ 	 store r75 	=> r72 
  	 br L0
-	// END WHILE STATEMENT #0
 L2:	 nop 
