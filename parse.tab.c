@@ -474,9 +474,9 @@ static const yytype_uint16 yyrline[] =
        0,    51,    51,    51,    56,    59,    60,    63,    64,    65,
       68,    80,    87,    95,   103,   112,   113,   116,   117,   118,
      121,   122,   123,   124,   125,   128,   131,   137,   146,   131,
-     167,   179,   191,   203,   191,   228,   238,   261,   300,   315,
-     331,   348,   366,   385,   402,   441,   448,   455,   462,   466,
-     481,   497,   513,   529,   545,   560
+     167,   179,   191,   203,   191,   228,   244,   273,   310,   338,
+     367,   396,   425,   455,   481,   524,   532,   540,   548,   552,
+     578,   605,   632,   659,   686,   712
 };
 #endif
 
@@ -1614,18 +1614,24 @@ yyreduce:
   case 35:
 #line 228 "parse.y" /* yacc.c:1646  */
     { 
+									if((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+										printf("\n*** ERROR ***: RHS is not a scalar variable.\n");
+										return -1;
+									}
+
 									if (! ((((yyvsp[-2].targetReg).type == TYPE_INT) && ((yyvsp[0].targetReg).type == TYPE_INT)) || 
 										(((yyvsp[-2].targetReg).type == TYPE_BOOL) && ((yyvsp[0].targetReg).type == TYPE_BOOL)))) {
-											printf("*** ERROR ***: Assignment types do not match.\n");
+											printf("\n*** ERROR ***: Assignment types do not match.\n");
+											return -1;
 									}
 
 									emit(NOLABEL, STORE, (yyvsp[0].targetReg).targetRegister, (yyvsp[-2].targetReg).targetRegister, EMPTY);
 								}
-#line 1625 "parse.tab.c" /* yacc.c:1646  */
+#line 1631 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 238 "parse.y" /* yacc.c:1646  */
+#line 244 "parse.y" /* yacc.c:1646  */
     { 
 							int newReg1 = NextRegister();
 							int newReg2 = NextRegister();
@@ -1633,7 +1639,13 @@ yyreduce:
 							SymTabEntry *entry = lookup((yyvsp[0].token).str);
 
 							if(entry == NULL){
-								printf("*** ERROR ***: Variable undeclared.\n");
+								printf("\n*** ERROR ***: Variable %s not declared.\n", (yyvsp[0].token).str);
+								return -1;
+							}
+
+							if(entry->quantityType != QUANTITY_SCALAR){
+								printf("\n*** ERROR ***: Variable %s is not a scalar variable.\n", (yyvsp[0].token).str);
+								return -1;
 							}
 
 							int offset = entry->offset;				
@@ -1647,11 +1659,11 @@ yyreduce:
 							emit(NOLABEL, LOADI, offset, newReg1, EMPTY);
 							emit(NOLABEL, ADD, 0, newReg1, newReg2);
 						}
-#line 1651 "parse.tab.c" /* yacc.c:1646  */
+#line 1663 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 261 "parse.y" /* yacc.c:1646  */
+#line 273 "parse.y" /* yacc.c:1646  */
     {
 
 							int resultRegister = NextRegister();
@@ -1662,15 +1674,13 @@ yyreduce:
 							SymTabEntry *entry = lookup((yyvsp[-3].token).str);
 
 							if(entry == NULL){
-								printf("*** ERROR ***: Variable undeclared.\n");
+								printf("\n*** ERROR ***: Variable %s not declared.\n", (yyvsp[-3].token).str);
+								return -1;
 							}
 
-							if((yyvsp[-1].targetReg).type == TYPE_BOOL){
-								printf("*** ERROR ***: Attempts to use boolean as key.\n");
-							}
-
-							if((yyvsp[-1].targetReg).quantityType == QUANTITY_ARRAY){
-								printf("*** ERROR ***: Attempts to use array as key.\n");
+							if((yyvsp[-1].targetReg).type == TYPE_BOOL || (yyvsp[-1].targetReg).quantityType == QUANTITY_ARRAY){
+								printf("\n*** ERROR ***: Array variable %s index type must be integer.\n", (yyvsp[-3].token).str);
+								return -1;
 							}
 
 							(yyval.targetReg).quantityType = QUANTITY_SCALAR;
@@ -1688,59 +1698,97 @@ yyreduce:
 							emit(NOLABEL, ADD, 0, offsetRegister, (yyval.targetReg).targetRegister);
 
 						}
-#line 1692 "parse.tab.c" /* yacc.c:1646  */
+#line 1702 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 300 "parse.y" /* yacc.c:1646  */
+#line 310 "parse.y" /* yacc.c:1646  */
     { 
 							int newReg = NextRegister();
 
 							if (! (((yyvsp[-2].targetReg).type == TYPE_INT) && ((yyvsp[0].targetReg).type == TYPE_INT))) {
-								printf("*** ERROR ***: Operator types must be integer.\n");
+								printf("\n*** ERROR ***: Operator types must be integer.\n");
+								return -1;
 							}
-							(yyval.targetReg).type = (yyvsp[-2].targetReg).type;
 
+							if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+								printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+								return -1;
+							}
+
+							if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+								printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+								return -1;
+							}
+
+							(yyval.targetReg).type = (yyvsp[-2].targetReg).type;
+							(yyval.targetReg).quantityType = QUANTITY_SCALAR;
 							(yyval.targetReg).targetRegister = newReg;
+	
 							sprintf(CommentBuffer, "ADD'ing variables stored in registers %d and %d", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
 								emitComment(CommentBuffer);
 							emit(NOLABEL, ADD, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, newReg);
 						
 						}
-#line 1711 "parse.tab.c" /* yacc.c:1646  */
+#line 1734 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 315 "parse.y" /* yacc.c:1646  */
+#line 338 "parse.y" /* yacc.c:1646  */
     {
 
 								int newReg = NextRegister();
 
 								if (! (((yyvsp[-2].targetReg).type == TYPE_INT) && ((yyvsp[0].targetReg).type == TYPE_INT))) {
-									printf("*** ERROR ***: Operator types must be integer.\n");
+									printf("\n*** ERROR ***: Operator types must be integer.\n");
+									return -1;
 								}
-								(yyval.targetReg).type = (yyvsp[-2].targetReg).type;
 
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
+								}
+
+								(yyval.targetReg).type = (yyvsp[-2].targetReg).type;
+								(yyval.targetReg).quantityType = QUANTITY_SCALAR;
 								(yyval.targetReg).targetRegister = newReg;
+
 								sprintf(CommentBuffer, "SUB'ing variables stored in registers %d and %d", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
 								emitComment(CommentBuffer);
 								emit(NOLABEL, SUB, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, newReg);
 
 							}
-#line 1731 "parse.tab.c" /* yacc.c:1646  */
+#line 1767 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 331 "parse.y" /* yacc.c:1646  */
+#line 367 "parse.y" /* yacc.c:1646  */
     {
 
 								int newReg = NextRegister();
 
 								if (! (((yyvsp[-2].targetReg).type == TYPE_INT) && ((yyvsp[0].targetReg).type == TYPE_INT))) {
-									printf("*** ERROR ***: Operator types must be integer.\n");
+									printf("\n*** ERROR ***: Operator types must be integer.\n");
+									return -1;
 								}
-								(yyval.targetReg).type = (yyvsp[-2].targetReg).type;
 
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
+								}
+
+								(yyval.targetReg).type = (yyvsp[-2].targetReg).type;
+								(yyval.targetReg).quantityType = QUANTITY_SCALAR;
 								(yyval.targetReg).targetRegister = newReg;
 
 								sprintf(CommentBuffer, "MULT'ing variables stored in registers %d and %d", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -1748,20 +1796,31 @@ yyreduce:
 								emit(NOLABEL, MULT, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, newReg);
 
 							}
-#line 1752 "parse.tab.c" /* yacc.c:1646  */
+#line 1800 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 348 "parse.y" /* yacc.c:1646  */
+#line 396 "parse.y" /* yacc.c:1646  */
     {
 
 								int newReg = NextRegister();
 
 								if((yyvsp[-2].targetReg).type != TYPE_BOOL || (yyvsp[0].targetReg).type != TYPE_BOOL){
-									printf("*** ERROR ***: Operator types must be boolean.\n");
+									printf("\n*** ERROR ***: Operator types must be boolean.\n");
+								}
+
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
 								}
 
 								(yyval.targetReg).type = (yyvsp[-2].targetReg).type;
+								(yyval.targetReg).quantityType = QUANTITY_SCALAR;
 								(yyval.targetReg).targetRegister = newReg;
 
 								sprintf(CommentBuffer, "AND'ing variables stored in registers %d and %d", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -1769,20 +1828,31 @@ yyreduce:
 								emit(NOLABEL, AND_INSTR, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, (yyval.targetReg).targetRegister);
 
 							}
-#line 1773 "parse.tab.c" /* yacc.c:1646  */
+#line 1832 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 366 "parse.y" /* yacc.c:1646  */
+#line 425 "parse.y" /* yacc.c:1646  */
     { 
 
 								int newReg = NextRegister();
 
 								if((yyvsp[-2].targetReg).type != TYPE_BOOL || (yyvsp[0].targetReg).type != TYPE_BOOL){
-									printf("*** ERROR ***: Operator types must be boolean.\n");
+									printf("\n*** ERROR ***: Operator types must be boolean.\n");
+								}
+
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
 								}
 
 								(yyval.targetReg).type = (yyvsp[-2].targetReg).type;
+								(yyval.targetReg).quantityType = QUANTITY_SCALAR;
 								(yyval.targetReg).targetRegister = newReg;
 
 								sprintf(CommentBuffer, "OR'ing variables stored in registers %d and %d", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -1791,32 +1861,41 @@ yyreduce:
 
 
 							}
-#line 1795 "parse.tab.c" /* yacc.c:1646  */
+#line 1865 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 385 "parse.y" /* yacc.c:1646  */
+#line 455 "parse.y" /* yacc.c:1646  */
     { 
 								int newReg = NextRegister();
 								
 								SymTabEntry* entry = lookup((yyvsp[0].token).str);
 								if(entry == NULL){
-									printf("*** ERROR ***: Variable %s not found\n", (yyvsp[0].token).str);
+									printf("\n*** ERROR ***: Variable %s not declared\n", (yyvsp[0].token).str);
+									return -1;
+								}
+
+								if(entry->quantityType != QUANTITY_SCALAR){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable.\n", (yyvsp[0].token).str);
+									return -1;
 								}
 
 								int offset = entry->offset;
 
 								(yyval.targetReg).targetRegister = newReg;
+								(yyval.targetReg).varName = (yyvsp[0].token).str;
 								(yyval.targetReg).type = entry->type;
+								(yyval.targetReg).quantityType = entry->quantityType;
+
 								sprintf(CommentBuffer, "Loading variable %s from RHS to register \"r%d\"", (yyvsp[0].token).str, newReg);
 								emitComment(CommentBuffer);
 								emit(NOLABEL, LOADAI, 0, offset, newReg);								  
 							}
-#line 1816 "parse.tab.c" /* yacc.c:1646  */
+#line 1895 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 402 "parse.y" /* yacc.c:1646  */
+#line 481 "parse.y" /* yacc.c:1646  */
     {
 
 								int resultRegister = NextRegister();
@@ -1827,18 +1906,22 @@ yyreduce:
 								SymTabEntry *entry = lookup((yyvsp[-3].token).str);
 
 								if(entry == NULL){
-									printf("*** ERROR ***: Variable undeclared.\n");
+									printf("\n*** ERROR ***: Variable %s not declared.\n", (yyvsp[-3].token).str);
+									return -1;
 								}
 
-								if((yyvsp[-1].targetReg).type == TYPE_BOOL){
-									printf("*** ERROR ***: Attempts to use boolean as key.\n");
+								if((yyvsp[-1].targetReg).type == TYPE_BOOL || (yyvsp[-1].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Array variable %s index type must be integer.\n", (yyvsp[-3].token).str);
+									return -1;
 								}
 
-								if((yyvsp[-1].targetReg).quantityType == QUANTITY_ARRAY){
-									printf("*** ERROR ***: Attempts to use array as key.\n");
+								if(entry->quantityType != QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not an array variable.\n", (yyvsp[-3].token).str);
+									return -1;
 								}
 
 								(yyval.targetReg).quantityType = QUANTITY_SCALAR;
+								(yyval.targetReg).varName = (yyvsp[-3].token).str;
 								(yyval.targetReg).type = entry->type;
 								(yyval.targetReg).targetRegister = resultRegister;
 
@@ -1853,57 +1936,71 @@ yyreduce:
 								emit(NOLABEL, LOADAO, 0, offsetRegister, (yyval.targetReg).targetRegister);
 
 							}
-#line 1857 "parse.tab.c" /* yacc.c:1646  */
+#line 1940 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 441 "parse.y" /* yacc.c:1646  */
+#line 524 "parse.y" /* yacc.c:1646  */
     {
 						int newReg = NextRegister();
 						(yyval.targetReg).targetRegister = newReg;
 				   		(yyval.targetReg).type = TYPE_INT;
+				   		(yyval.targetReg).quantityType = QUANTITY_SCALAR;
 				   		emit(NOLABEL, LOADI, (yyvsp[0].token).num, newReg, EMPTY); 
 				   	}
-#line 1868 "parse.tab.c" /* yacc.c:1646  */
+#line 1952 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 448 "parse.y" /* yacc.c:1646  */
+#line 532 "parse.y" /* yacc.c:1646  */
     { 
 						int newReg = NextRegister(); /* TRUE is encoded as value '1' */
 						(yyval.targetReg).targetRegister = newReg;
 						(yyval.targetReg).type = TYPE_BOOL;
+						(yyval.targetReg).quantityType = QUANTITY_SCALAR;
 						emit(NOLABEL, LOADI, 1, newReg, EMPTY); 
 					}
-#line 1879 "parse.tab.c" /* yacc.c:1646  */
+#line 1964 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 455 "parse.y" /* yacc.c:1646  */
+#line 540 "parse.y" /* yacc.c:1646  */
     { 
 						int newReg = NextRegister(); /* TRUE is encoded as value '0' */
 						(yyval.targetReg).targetRegister = newReg;
 				   		(yyval.targetReg).type = TYPE_BOOL;
+				   		(yyval.targetReg).quantityType = QUANTITY_SCALAR;
 				   		emit(NOLABEL, LOADI, 0, newReg, EMPTY); 
 				   	}
-#line 1890 "parse.tab.c" /* yacc.c:1646  */
+#line 1976 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 462 "parse.y" /* yacc.c:1646  */
+#line 548 "parse.y" /* yacc.c:1646  */
     { yyerror("***Error: illegal expression\n");}
-#line 1896 "parse.tab.c" /* yacc.c:1646  */
+#line 1982 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 466 "parse.y" /* yacc.c:1646  */
+#line 552 "parse.y" /* yacc.c:1646  */
     {
 	
 								(yyval.targetReg).targetRegister = NextRegister();
 								(yyval.targetReg).type = TYPE_BOOL;
 
 								if((yyvsp[-2].targetReg).type != (yyvsp[0].targetReg).type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+									printf("\n*** ERROR ***: == or != operator with different types.\n");
+									return -1;
+								}
+
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" NE \"r%d\"", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -1911,11 +2008,11 @@ yyreduce:
 								emit(NOLABEL, CMPNE, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, (yyval.targetReg).targetRegister);
 
 							}
-#line 1915 "parse.tab.c" /* yacc.c:1646  */
+#line 2012 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 50:
-#line 481 "parse.y" /* yacc.c:1646  */
+#line 578 "parse.y" /* yacc.c:1646  */
     {
 
 	
@@ -1923,7 +2020,18 @@ yyreduce:
 								(yyval.targetReg).type = TYPE_BOOL;
 
 								if((yyvsp[-2].targetReg).type != (yyvsp[0].targetReg).type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+									printf("\n*** ERROR ***: == or != operator with different types.\n");
+									return -1;
+								}
+
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" == \"r%d\"", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -1931,19 +2039,30 @@ yyreduce:
 								emit(NOLABEL, CMPEQ, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, (yyval.targetReg).targetRegister);
 
 							}
-#line 1935 "parse.tab.c" /* yacc.c:1646  */
+#line 2043 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 497 "parse.y" /* yacc.c:1646  */
+#line 605 "parse.y" /* yacc.c:1646  */
     {
 
 	
 								(yyval.targetReg).targetRegister = NextRegister();
 								(yyval.targetReg).type = TYPE_BOOL;
 
-								if((yyvsp[-2].targetReg).type != (yyvsp[0].targetReg).type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+								if((yyvsp[-2].targetReg).type != TYPE_INT || (yyvsp[0].targetReg).type != TYPE_INT){
+									printf("\n*** ERROR ***: Relational operator with illegal type.\n");
+									return -1;
+								}
+
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" < \"r%d\"", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -1951,19 +2070,30 @@ yyreduce:
 								emit(NOLABEL, CMPLT, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, (yyval.targetReg).targetRegister);
 
 							}
-#line 1955 "parse.tab.c" /* yacc.c:1646  */
+#line 2074 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 513 "parse.y" /* yacc.c:1646  */
+#line 632 "parse.y" /* yacc.c:1646  */
     {
 
 	
 								(yyval.targetReg).targetRegister = NextRegister();
 								(yyval.targetReg).type = TYPE_BOOL;
 
-								if((yyvsp[-2].targetReg).type != (yyvsp[0].targetReg).type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+								if((yyvsp[-2].targetReg).type != TYPE_INT || (yyvsp[0].targetReg).type != TYPE_INT){
+									printf("\n*** ERROR ***: Relational operator with illegal type.\n");
+									return -1;
+								}
+
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" <= \"r%d\"", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -1971,19 +2101,30 @@ yyreduce:
 								emit(NOLABEL, CMPLE, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, (yyval.targetReg).targetRegister);
 
 							}
-#line 1975 "parse.tab.c" /* yacc.c:1646  */
+#line 2105 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 529 "parse.y" /* yacc.c:1646  */
+#line 659 "parse.y" /* yacc.c:1646  */
     {
 
 	
 								(yyval.targetReg).targetRegister = NextRegister();
 								(yyval.targetReg).type = TYPE_BOOL;
 
-								if((yyvsp[-2].targetReg).type != (yyvsp[0].targetReg).type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+								if((yyvsp[-2].targetReg).type != TYPE_INT || (yyvsp[0].targetReg).type != TYPE_INT){
+									printf("\n*** ERROR ***: Relational operator with illegal type.\n");
+									return -1;
+								}
+
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" > \"r%d\"", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -1991,19 +2132,30 @@ yyreduce:
 								emit(NOLABEL, CMPGT, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, (yyval.targetReg).targetRegister);
 
 							}
-#line 1995 "parse.tab.c" /* yacc.c:1646  */
+#line 2136 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 545 "parse.y" /* yacc.c:1646  */
+#line 686 "parse.y" /* yacc.c:1646  */
     {
 
 	
 								(yyval.targetReg).targetRegister = NextRegister();
 								(yyval.targetReg).type = TYPE_BOOL;
 
-								if((yyvsp[-2].targetReg).type != (yyvsp[0].targetReg).type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+								if((yyvsp[-2].targetReg).type != TYPE_INT || (yyvsp[0].targetReg).type != TYPE_INT){
+									printf("\n*** ERROR ***: Relational operator with illegal type.\n");
+									return -1;
+								}
+
+								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[-2].targetReg).varName);
+									return -1;
+								}
+
+								if ((yyvsp[0].targetReg).quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", (yyvsp[0].targetReg).varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" >= \"r%d\"", (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister);
@@ -2011,17 +2163,17 @@ yyreduce:
 								emit(NOLABEL, CMPGE, (yyvsp[-2].targetReg).targetRegister, (yyvsp[0].targetReg).targetRegister, (yyval.targetReg).targetRegister);
 
 							}
-#line 2015 "parse.tab.c" /* yacc.c:1646  */
+#line 2167 "parse.tab.c" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 560 "parse.y" /* yacc.c:1646  */
+#line 712 "parse.y" /* yacc.c:1646  */
     { yyerror("***Error: illegal conditional expression\n");}
-#line 2021 "parse.tab.c" /* yacc.c:1646  */
+#line 2173 "parse.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 2025 "parse.tab.c" /* yacc.c:1646  */
+#line 2177 "parse.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2249,7 +2401,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 563 "parse.y" /* yacc.c:1906  */
+#line 715 "parse.y" /* yacc.c:1906  */
 
 
 void yyerror(char* s) {

@@ -226,9 +226,15 @@ wstmt	: WHILE  	{
 
 
 astmt : lhs ASG exp             { 
+									if($3.quantityType == QUANTITY_ARRAY){
+										printf("\n*** ERROR ***: RHS is not a scalar variable.\n");
+										return -1;
+									}
+
 									if (! ((($1.type == TYPE_INT) && ($3.type == TYPE_INT)) || 
 										(($1.type == TYPE_BOOL) && ($3.type == TYPE_BOOL)))) {
-											printf("*** ERROR ***: Assignment types do not match.\n");
+											printf("\n*** ERROR ***: Assignment types do not match.\n");
+											return -1;
 									}
 
 									emit(NOLABEL, STORE, $3.targetRegister, $1.targetRegister, EMPTY);
@@ -242,7 +248,13 @@ astmt : lhs ASG exp             {
 							SymTabEntry *entry = lookup($1.str);
 
 							if(entry == NULL){
-								printf("*** ERROR ***: Variable undeclared.\n");
+								printf("\n*** ERROR ***: Variable %s not declared.\n", $1.str);
+								return -1;
+							}
+
+							if(entry->quantityType != QUANTITY_SCALAR){
+								printf("\n*** ERROR ***: Variable %s is not a scalar variable.\n", $1.str);
+								return -1;
 							}
 
 							int offset = entry->offset;				
@@ -268,15 +280,13 @@ astmt : lhs ASG exp             {
 							SymTabEntry *entry = lookup($1.str);
 
 							if(entry == NULL){
-								printf("*** ERROR ***: Variable undeclared.\n");
+								printf("\n*** ERROR ***: Variable %s not declared.\n", $1.str);
+								return -1;
 							}
 
-							if($3.type == TYPE_BOOL){
-								printf("*** ERROR ***: Attempts to use boolean as key.\n");
-							}
-
-							if($3.quantityType == QUANTITY_ARRAY){
-								printf("*** ERROR ***: Attempts to use array as key.\n");
+							if($3.type == TYPE_BOOL || $3.quantityType == QUANTITY_ARRAY){
+								printf("\n*** ERROR ***: Array variable %s index type must be integer.\n", $1.str);
+								return -1;
 							}
 
 							$$.quantityType = QUANTITY_SCALAR;
@@ -301,11 +311,24 @@ exp	: exp '+' exp		{
 							int newReg = NextRegister();
 
 							if (! (($1.type == TYPE_INT) && ($3.type == TYPE_INT))) {
-								printf("*** ERROR ***: Operator types must be integer.\n");
+								printf("\n*** ERROR ***: Operator types must be integer.\n");
+								return -1;
 							}
-							$$.type = $1.type;
 
+							if ($1.quantityType == QUANTITY_ARRAY){
+								printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+								return -1;
+							}
+
+							if ($3.quantityType == QUANTITY_ARRAY){
+								printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+								return -1;
+							}
+
+							$$.type = $1.type;
+							$$.quantityType = QUANTITY_SCALAR;
 							$$.targetRegister = newReg;
+	
 							sprintf(CommentBuffer, "ADD'ing variables stored in registers %d and %d", $1.targetRegister, $3.targetRegister);
 								emitComment(CommentBuffer);
 							emit(NOLABEL, ADD, $1.targetRegister, $3.targetRegister, newReg);
@@ -317,11 +340,24 @@ exp	: exp '+' exp		{
 								int newReg = NextRegister();
 
 								if (! (($1.type == TYPE_INT) && ($3.type == TYPE_INT))) {
-									printf("*** ERROR ***: Operator types must be integer.\n");
+									printf("\n*** ERROR ***: Operator types must be integer.\n");
+									return -1;
 								}
-								$$.type = $1.type;
 
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
+								}
+
+								$$.type = $1.type;
+								$$.quantityType = QUANTITY_SCALAR;
 								$$.targetRegister = newReg;
+
 								sprintf(CommentBuffer, "SUB'ing variables stored in registers %d and %d", $1.targetRegister, $3.targetRegister);
 								emitComment(CommentBuffer);
 								emit(NOLABEL, SUB, $1.targetRegister, $3.targetRegister, newReg);
@@ -333,10 +369,22 @@ exp	: exp '+' exp		{
 								int newReg = NextRegister();
 
 								if (! (($1.type == TYPE_INT) && ($3.type == TYPE_INT))) {
-									printf("*** ERROR ***: Operator types must be integer.\n");
+									printf("\n*** ERROR ***: Operator types must be integer.\n");
+									return -1;
 								}
-								$$.type = $1.type;
 
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
+								}
+
+								$$.type = $1.type;
+								$$.quantityType = QUANTITY_SCALAR;
 								$$.targetRegister = newReg;
 
 								sprintf(CommentBuffer, "MULT'ing variables stored in registers %d and %d", $1.targetRegister, $3.targetRegister);
@@ -350,10 +398,21 @@ exp	: exp '+' exp		{
 								int newReg = NextRegister();
 
 								if($1.type != TYPE_BOOL || $3.type != TYPE_BOOL){
-									printf("*** ERROR ***: Operator types must be boolean.\n");
+									printf("\n*** ERROR ***: Operator types must be boolean.\n");
+								}
+
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
 								}
 
 								$$.type = $1.type;
+								$$.quantityType = QUANTITY_SCALAR;
 								$$.targetRegister = newReg;
 
 								sprintf(CommentBuffer, "AND'ing variables stored in registers %d and %d", $1.targetRegister, $3.targetRegister);
@@ -368,10 +427,21 @@ exp	: exp '+' exp		{
 								int newReg = NextRegister();
 
 								if($1.type != TYPE_BOOL || $3.type != TYPE_BOOL){
-									printf("*** ERROR ***: Operator types must be boolean.\n");
+									printf("\n*** ERROR ***: Operator types must be boolean.\n");
+								}
+
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
 								}
 
 								$$.type = $1.type;
+								$$.quantityType = QUANTITY_SCALAR;
 								$$.targetRegister = newReg;
 
 								sprintf(CommentBuffer, "OR'ing variables stored in registers %d and %d", $1.targetRegister, $3.targetRegister);
@@ -387,13 +457,22 @@ exp	: exp '+' exp		{
 								
 								SymTabEntry* entry = lookup($1.str);
 								if(entry == NULL){
-									printf("*** ERROR ***: Variable %s not found\n", $1.str);
+									printf("\n*** ERROR ***: Variable %s not declared\n", $1.str);
+									return -1;
+								}
+
+								if(entry->quantityType != QUANTITY_SCALAR){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable.\n", $1.str);
+									return -1;
 								}
 
 								int offset = entry->offset;
 
 								$$.targetRegister = newReg;
+								$$.varName = $1.str;
 								$$.type = entry->type;
+								$$.quantityType = entry->quantityType;
+
 								sprintf(CommentBuffer, "Loading variable %s from RHS to register \"r%d\"", $1.str, newReg);
 								emitComment(CommentBuffer);
 								emit(NOLABEL, LOADAI, 0, offset, newReg);								  
@@ -409,18 +488,22 @@ exp	: exp '+' exp		{
 								SymTabEntry *entry = lookup($1.str);
 
 								if(entry == NULL){
-									printf("*** ERROR ***: Variable undeclared.\n");
+									printf("\n*** ERROR ***: Variable %s not declared.\n", $1.str);
+									return -1;
 								}
 
-								if($3.type == TYPE_BOOL){
-									printf("*** ERROR ***: Attempts to use boolean as key.\n");
+								if($3.type == TYPE_BOOL || $3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Array variable %s index type must be integer.\n", $1.str);
+									return -1;
 								}
 
-								if($3.quantityType == QUANTITY_ARRAY){
-									printf("*** ERROR ***: Attempts to use array as key.\n");
+								if(entry->quantityType != QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not an array variable.\n", $1.str);
+									return -1;
 								}
 
 								$$.quantityType = QUANTITY_SCALAR;
+								$$.varName = $1.str;
 								$$.type = entry->type;
 								$$.targetRegister = resultRegister;
 
@@ -442,6 +525,7 @@ exp	: exp '+' exp		{
 						int newReg = NextRegister();
 						$$.targetRegister = newReg;
 				   		$$.type = TYPE_INT;
+				   		$$.quantityType = QUANTITY_SCALAR;
 				   		emit(NOLABEL, LOADI, $1.num, newReg, EMPTY); 
 				   	}
 
@@ -449,6 +533,7 @@ exp	: exp '+' exp		{
 						int newReg = NextRegister(); /* TRUE is encoded as value '1' */
 						$$.targetRegister = newReg;
 						$$.type = TYPE_BOOL;
+						$$.quantityType = QUANTITY_SCALAR;
 						emit(NOLABEL, LOADI, 1, newReg, EMPTY); 
 					}
 
@@ -456,6 +541,7 @@ exp	: exp '+' exp		{
 						int newReg = NextRegister(); /* TRUE is encoded as value '0' */
 						$$.targetRegister = newReg;
 				   		$$.type = TYPE_BOOL;
+				   		$$.quantityType = QUANTITY_SCALAR;
 				   		emit(NOLABEL, LOADI, 0, newReg, EMPTY); 
 				   	}
 
@@ -469,7 +555,18 @@ condexp	: exp NEQ exp		{
 								$$.type = TYPE_BOOL;
 
 								if($1.type != $3.type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+									printf("\n*** ERROR ***: == or != operator with different types.\n");
+									return -1;
+								}
+
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" NE \"r%d\"", $1.targetRegister, $3.targetRegister);
@@ -485,7 +582,18 @@ condexp	: exp NEQ exp		{
 								$$.type = TYPE_BOOL;
 
 								if($1.type != $3.type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+									printf("\n*** ERROR ***: == or != operator with different types.\n");
+									return -1;
+								}
+
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" == \"r%d\"", $1.targetRegister, $3.targetRegister);
@@ -500,8 +608,19 @@ condexp	: exp NEQ exp		{
 								$$.targetRegister = NextRegister();
 								$$.type = TYPE_BOOL;
 
-								if($1.type != $3.type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+								if($1.type != TYPE_INT || $3.type != TYPE_INT){
+									printf("\n*** ERROR ***: Relational operator with illegal type.\n");
+									return -1;
+								}
+
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" < \"r%d\"", $1.targetRegister, $3.targetRegister);
@@ -516,8 +635,19 @@ condexp	: exp NEQ exp		{
 								$$.targetRegister = NextRegister();
 								$$.type = TYPE_BOOL;
 
-								if($1.type != $3.type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+								if($1.type != TYPE_INT || $3.type != TYPE_INT){
+									printf("\n*** ERROR ***: Relational operator with illegal type.\n");
+									return -1;
+								}
+
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" <= \"r%d\"", $1.targetRegister, $3.targetRegister);
@@ -532,8 +662,19 @@ condexp	: exp NEQ exp		{
 								$$.targetRegister = NextRegister();
 								$$.type = TYPE_BOOL;
 
-								if($1.type != $3.type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+								if($1.type != TYPE_INT || $3.type != TYPE_INT){
+									printf("\n*** ERROR ***: Relational operator with illegal type.\n");
+									return -1;
+								}
+
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" > \"r%d\"", $1.targetRegister, $3.targetRegister);
@@ -548,8 +689,19 @@ condexp	: exp NEQ exp		{
 								$$.targetRegister = NextRegister();
 								$$.type = TYPE_BOOL;
 
-								if($1.type != $3.type){
-									printf("*** ERROR ***: Incompatible type comparison\n");
+								if($1.type != TYPE_INT || $3.type != TYPE_INT){
+									printf("\n*** ERROR ***: Relational operator with illegal type.\n");
+									return -1;
+								}
+
+								if ($1.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $1.varName);
+									return -1;
+								}
+
+								if ($3.quantityType == QUANTITY_ARRAY){
+									printf("\n*** ERROR ***: Variable %s is not a scalar variable\n", $3.varName);
+									return -1;
 								}
 
 								sprintf(CommentBuffer, "Asserting \"r%d\" >= \"r%d\"", $1.targetRegister, $3.targetRegister);

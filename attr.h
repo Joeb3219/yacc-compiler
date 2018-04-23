@@ -18,6 +18,7 @@ typedef struct {
 	Type_Expression type;
 	int targetRegister;
 	int blocksNeeded;
+	char* varName;
 } regInfo;
 
 typedef struct {
