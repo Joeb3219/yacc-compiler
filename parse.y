@@ -311,7 +311,7 @@ exp	: exp '+' exp		{
 							int newReg = NextRegister();
 
 							if (! (($1.type == TYPE_INT) && ($3.type == TYPE_INT))) {
-								printf("\n*** ERROR ***: Operator types must be integer.\n");
+								printf("\n*** ERROR ***: Operand type must be integer.\n");
 								return -1;
 							}
 
@@ -340,7 +340,7 @@ exp	: exp '+' exp		{
 								int newReg = NextRegister();
 
 								if (! (($1.type == TYPE_INT) && ($3.type == TYPE_INT))) {
-									printf("\n*** ERROR ***: Operator types must be integer.\n");
+									printf("\n*** ERROR ***: Operand type must be integer.\n");
 									return -1;
 								}
 
@@ -369,7 +369,7 @@ exp	: exp '+' exp		{
 								int newReg = NextRegister();
 
 								if (! (($1.type == TYPE_INT) && ($3.type == TYPE_INT))) {
-									printf("\n*** ERROR ***: Operator types must be integer.\n");
+									printf("\n*** ERROR ***: Operand type must be integer.\n");
 									return -1;
 								}
 
@@ -398,7 +398,7 @@ exp	: exp '+' exp		{
 								int newReg = NextRegister();
 
 								if($1.type != TYPE_BOOL || $3.type != TYPE_BOOL){
-									printf("\n*** ERROR ***: Operator types must be boolean.\n");
+									printf("\n*** ERROR ***: Operand type must be boolean.\n");
 								}
 
 								if ($1.quantityType == QUANTITY_ARRAY){
@@ -427,7 +427,7 @@ exp	: exp '+' exp		{
 								int newReg = NextRegister();
 
 								if($1.type != TYPE_BOOL || $3.type != TYPE_BOOL){
-									printf("\n*** ERROR ***: Operator types must be boolean.\n");
+									printf("\n*** ERROR ***: Operand type must be boolean.\n");
 								}
 
 								if ($1.quantityType == QUANTITY_ARRAY){

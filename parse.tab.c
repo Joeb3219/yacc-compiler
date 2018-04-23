@@ -1707,7 +1707,7 @@ yyreduce:
 							int newReg = NextRegister();
 
 							if (! (((yyvsp[-2].targetReg).type == TYPE_INT) && ((yyvsp[0].targetReg).type == TYPE_INT))) {
-								printf("\n*** ERROR ***: Operator types must be integer.\n");
+								printf("\n*** ERROR ***: Operand type must be integer.\n");
 								return -1;
 							}
 
@@ -1740,7 +1740,7 @@ yyreduce:
 								int newReg = NextRegister();
 
 								if (! (((yyvsp[-2].targetReg).type == TYPE_INT) && ((yyvsp[0].targetReg).type == TYPE_INT))) {
-									printf("\n*** ERROR ***: Operator types must be integer.\n");
+									printf("\n*** ERROR ***: Operand type must be integer.\n");
 									return -1;
 								}
 
@@ -1773,7 +1773,7 @@ yyreduce:
 								int newReg = NextRegister();
 
 								if (! (((yyvsp[-2].targetReg).type == TYPE_INT) && ((yyvsp[0].targetReg).type == TYPE_INT))) {
-									printf("\n*** ERROR ***: Operator types must be integer.\n");
+									printf("\n*** ERROR ***: Operand type must be integer.\n");
 									return -1;
 								}
 
@@ -1806,7 +1806,7 @@ yyreduce:
 								int newReg = NextRegister();
 
 								if((yyvsp[-2].targetReg).type != TYPE_BOOL || (yyvsp[0].targetReg).type != TYPE_BOOL){
-									printf("\n*** ERROR ***: Operator types must be boolean.\n");
+									printf("\n*** ERROR ***: Operand type must be boolean.\n");
 								}
 
 								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
@@ -1838,7 +1838,7 @@ yyreduce:
 								int newReg = NextRegister();
 
 								if((yyvsp[-2].targetReg).type != TYPE_BOOL || (yyvsp[0].targetReg).type != TYPE_BOOL){
-									printf("\n*** ERROR ***: Operator types must be boolean.\n");
+									printf("\n*** ERROR ***: Operand type must be boolean.\n");
 								}
 
 								if ((yyvsp[-2].targetReg).quantityType == QUANTITY_ARRAY){
